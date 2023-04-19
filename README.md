@@ -81,6 +81,9 @@ Features
 Changelog
 =========
 
+* v0.0.3:
+  * Add io.Closer support to the BoundaryAtomicString. Start thinking about
+    how to handle the variety of types that may be involved.
 * v0.0.2:
   * The broken boundary code remains, code for consuming a reader until a
     byte or one of a set of bytes is added.

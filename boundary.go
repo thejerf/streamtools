@@ -56,6 +56,14 @@ func NewBoundaryAtomicString(src io.Reader, search string) *BoundaryAtomicString
 	}
 }
 
+func (bas *BoundaryAtomicString) Close() error {
+	closer, isCloser := bas.src.(io.Closer)
+	if isCloser {
+		return closer.Close()
+	}
+	return nil
+}
+
 // FIXME: This should be abstractable into a generalized function that
 // takes the next value and returns either:
 //  1. no, I'm not interested in this value
