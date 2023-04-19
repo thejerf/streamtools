@@ -3,6 +3,8 @@ package streamtools
 import (
 	"fmt"
 	"io"
+
+	_ "github.com/davecgh/go-spew/spew"
 )
 
 // The "boundary" prefix refers to stream manipulators that manipulate the
@@ -76,10 +78,19 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 	}
 
 	for {
+		// if we're sitting on a non-match and it is already equal to or
+		// larger than the buffer, return it
+		if len(bas.nonMatchAccum) >= len(buf) {
+			n := copy(buf, bas.nonMatchAccum)
+			bas.nonMatchAccum = bas.nonMatchAccum[n:]
+			return n, nil
+		}
+
 		// If we're sitting on a match, return it; next call will continue on.
 		if len(bas.matchAccum) == len(bas.searchString) {
 			copy(buf, bas.matchAccum)
 			bas.matchAccum = bas.matchAccum[:0]
+			fmt.Println("Yield match A", len(bas.matchAccum), len(bas.searchString))
 			return len(bas.searchString), nil
 		}
 
@@ -89,14 +100,6 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 			len(bas.currBuf) == 0 &&
 			bas.lastReaderErr != nil {
 			return 0, bas.lastReaderErr
-		}
-
-		// if we're sitting on a non-match and it is already equal to or
-		// larger than the buffer, return it
-		if len(bas.nonMatchAccum) >= len(buf) {
-			n := copy(buf, bas.nonMatchAccum)
-			bas.nonMatchAccum = bas.nonMatchAccum[n:]
-			return n, nil
 		}
 
 		// If we had nothing in our buffer, we need to populate it.
@@ -114,12 +117,26 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 			switch {
 			case b == bas.searchString[len(bas.matchAccum)]:
 				bas.matchAccum = append(bas.matchAccum, b)
+				bas.currBuf = bas.currBuf[idx+1:]
 
-				// if we now have our match, return it
+				// if we now have our match, try to return it
 				if len(bas.matchAccum) == len(bas.searchString) {
+					// if we have a non-match in the
+					// way, try that first
+					if len(bas.nonMatchAccum) != 0 {
+						n := copy(buf, bas.nonMatchAccum)
+						if len(bas.nonMatchAccum) == n {
+							bas.nonMatchAccum = bas.nonMatchAccum[:0]
+						} else {
+							bas.nonMatchAccum = bas.nonMatchAccum[n:]
+						}
+						return n, nil
+					}
+
+					fmt.Println("Yield match B")
 					copy(buf, bas.matchAccum)
 					bas.matchAccum = bas.matchAccum[:0]
-					bas.currBuf = bas.currBuf[idx:]
+					fmt.Println("Remaining buf:", bas.currBuf)
 					return len(bas.searchString), nil
 				}
 
@@ -135,19 +152,22 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 				}
 
 				// now accumulate this non matcher
+				fmt.Println("accumulating a", b)
 				bas.nonMatchAccum = append(bas.nonMatchAccum, b)
 			}
-
-			bas.currBuf = bas.currBuf[1:]
 
 			// if we've accumulated a full buffer now, return
 			// it
 			if len(bas.nonMatchAccum) == len(buf) {
 				copy(buf, bas.nonMatchAccum)
 				bas.nonMatchAccum = bas.nonMatchAccum[0:]
+				bas.currBuf = bas.currBuf[idx+1:]
 				return len(buf), nil
 			}
 		}
+
+		// if we got here, we exhausted our buffer
+		bas.currBuf = bas.currBuf[:0]
 
 		// if we have something to return now, we can't have it be
 		// too long
