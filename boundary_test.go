@@ -39,6 +39,11 @@ func TestSimpleBoundaryTest(t *testing.T) {
 	for idx, test := range []SimpleBoundaryTest{
 		// FIXME: Handle a null search string correctly
 		{
+			"ABC",
+			[]string{"bbABCbb"},
+			[]string{"bb", "ABC", "bb"},
+		},
+		{
 			"A",
 			[]string{"bAc"},
 			[]string{"b", "A", "c"},

@@ -117,10 +117,11 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 			switch {
 			case b == bas.searchString[len(bas.matchAccum)]:
 				bas.matchAccum = append(bas.matchAccum, b)
-				bas.currBuf = bas.currBuf[idx+1:]
 
 				// if we now have our match, try to return it
 				if len(bas.matchAccum) == len(bas.searchString) {
+					fmt.Printf("currbuf: %#v\n", bas.currBuf)
+					bas.currBuf = bas.currBuf[idx+1:]
 					// if we have a non-match in the
 					// way, try that first
 					if len(bas.nonMatchAccum) != 0 {
@@ -152,7 +153,7 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 				}
 
 				// now accumulate this non matcher
-				fmt.Println("accumulating a", b)
+				fmt.Println("accumulating a", b, idx)
 				bas.nonMatchAccum = append(bas.nonMatchAccum, b)
 			}
 
