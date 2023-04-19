@@ -40,13 +40,8 @@ fundamentally different approaches to things in a streaming environment.
 Release Status
 ==============
 
-This package is currently **100% EXPERIMENTAL**. As usual, it does what it
-does, and if you like it you're welcome to use it, but I make no guarantees
-about anything at all.
-
-In particular, there are some naive algorithms being used right now that
-could be improved later, but in the first pass I'm focusing on obvious
-correctness over total speed.
+This package is currently **100% EXPERIMENTAL**. As I write this the one
+big function it has is even broken and needs a fundamental rewrite.
 
 Strictness
 ==========

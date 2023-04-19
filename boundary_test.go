@@ -1,7 +1,6 @@
 package streamtools
 
 import (
-	"fmt"
 	"io"
 	"reflect"
 	"testing"
@@ -38,6 +37,25 @@ func (cr *ChunkReader) Read(b []byte) (int, error) {
 func TestSimpleBoundaryTest(t *testing.T) {
 	for idx, test := range []SimpleBoundaryTest{
 		// FIXME: Handle a null search string correctly
+		// FIXME: This is known broken, but really requires a
+		// pretty significant overhaul of the code to fix and it
+		// does what I need it to in the first place,
+		// so... stopping here for now.
+		// {
+		// 	"ABC",
+		// 	[]string{"AB", "AB", "C"},
+		// 	[]string{"AB", "ABC"},
+		// },
+		{
+			"AABC",
+			[]string{"AA", "B", "C"},
+			[]string{"AABC"},
+		},
+		{
+			"ABC",
+			[]string{"A", "B", "C"},
+			[]string{"ABC"},
+		},
 		{
 			"ABC",
 			[]string{"bbA", "B", "C", "b"},
@@ -89,8 +107,6 @@ func TestSimpleBoundaryTest(t *testing.T) {
 			}
 			if err != io.EOF {
 				outChunks = append(outChunks, string(buf[:n]))
-				fmt.Println("Got out chunk:",
-					string(buf[:n]))
 			}
 		}
 
@@ -99,5 +115,23 @@ func TestSimpleBoundaryTest(t *testing.T) {
 			t.Fatalf("TestSimpleBoundaryTest case %d failed",
 				idx)
 		}
+	}
+}
+
+func TestSimpleBoundayrErrorCases(t *testing.T) {
+	bas := NewBoundaryAtomicString(nil, "abcd")
+	buf := make([]byte, 2)
+
+	n, err := bas.Read(nil)
+	if n != 0 || err != nil {
+		t.Fatalf("wrong error returns")
+	}
+
+	n, err = bas.Read(buf)
+	if n != 0 {
+		t.Fatalf("claims to have read some stuff")
+	}
+	if err.(StreamError).ErrorType != ErrBufferTooSmall {
+		t.Fatalf("incorrect errors")
 	}
 }

@@ -1,7 +1,6 @@
 package streamtools
 
 import (
-	"fmt"
 	"io"
 
 	_ "github.com/davecgh/go-spew/spew"
@@ -61,7 +60,8 @@ func NewBoundaryAtomicString(src io.Reader, search string) *BoundaryAtomicString
 // takes the next value and returns either:
 //  1. no, I'm not interested in this value
 //  2. yes, I'm interested but not done yet
-//  3. this completes my partition, please return it
+//  3. never mind, this whole thing was a false match
+//  4. this completes my partition, please return it
 
 func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 	if len(buf) == 0 {
@@ -90,7 +90,6 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 		if len(bas.matchAccum) == len(bas.searchString) {
 			copy(buf, bas.matchAccum)
 			bas.matchAccum = bas.matchAccum[:0]
-			fmt.Println("Yield match A", len(bas.matchAccum), len(bas.searchString))
 			return len(bas.searchString), nil
 		}
 
@@ -108,19 +107,16 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 			n, err := bas.src.Read(buf)
 			bas.currBuf = append(bas.currBuf, buf[:n]...)
 			bas.lastReaderErr = err
-			fmt.Println("Did read:", string(bas.currBuf), err)
 		}
 
 		buffer := bas.currBuf
 		for idx, b := range buffer {
-			fmt.Println(idx, b)
 			switch {
 			case b == bas.searchString[len(bas.matchAccum)]:
 				bas.matchAccum = append(bas.matchAccum, b)
 
 				// if we now have our match, try to return it
 				if len(bas.matchAccum) == len(bas.searchString) {
-					fmt.Printf("currbuf: %#v\n", bas.currBuf)
 					bas.currBuf = bas.currBuf[idx+1:]
 					// if we have a non-match in the
 					// way, try that first
@@ -134,17 +130,15 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 						return n, nil
 					}
 
-					fmt.Println("Yield match B")
 					copy(buf, bas.matchAccum)
 					bas.matchAccum = bas.matchAccum[:0]
-					fmt.Println("Remaining buf:", bas.currBuf)
 					return len(bas.searchString), nil
 				}
 
 			default:
 				// If we had prior matches but this breaks the
-				// match, we must put the prior match onto the
-				// non-matching accumulator
+				// match, we must restart the search using
+				// the previously-matched values
 				if len(bas.matchAccum) != 0 {
 					bas.nonMatchAccum =
 						append(bas.nonMatchAccum,
@@ -153,7 +147,6 @@ func (bas *BoundaryAtomicString) Read(buf []byte) (int, error) {
 				}
 
 				// now accumulate this non matcher
-				fmt.Println("accumulating a", b, idx)
 				bas.nonMatchAccum = append(bas.nonMatchAccum, b)
 			}
 
