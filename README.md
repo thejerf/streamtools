@@ -81,4 +81,10 @@ Features
 Changelog
 =========
 
+* v0.0.2:
+  * The broken boundary code remains, code for consuming a reader until a
+    byte or one of a set of bytes is added.
 * v0.0.1: Initial release.
+  * Broken code to make it possible to read an io.Reader stream for a
+    specific string, and get a guarantee that that string will be
+    atomically yielded as a .Read result if read.

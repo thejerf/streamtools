@@ -60,6 +60,9 @@ func ReadUntilAny(r io.Reader, ends []byte, buf []byte) (int, bool, error) {
 	for idx := range buf {
 		n, err = r.Read(mybuf)
 		if n == 1 {
+			// generally a for loop is faster than a map lookup
+			// belowe about 10 elements, which is probably the
+			// common case.
 			for _, b := range ends {
 				if mybuf[0] == b {
 					return idx, true, nil
