@@ -40,6 +40,26 @@ func TestSimpleBoundaryTest(t *testing.T) {
 		// FIXME: Handle a null search string correctly
 		{
 			"ABC",
+			[]string{"bbA", "B", "C", "b"},
+			[]string{"bb", "ABC", "b"},
+		},
+		{
+			"ABC",
+			[]string{"bbA", "BC", "b"},
+			[]string{"bb", "ABC", "b"},
+		},
+		{
+			"ABC",
+			[]string{"bbABC"},
+			[]string{"bb", "ABC"},
+		},
+		{
+			"ABC",
+			[]string{"ABCbb"},
+			[]string{"ABC", "bb"},
+		},
+		{
+			"ABC",
 			[]string{"bbABCbb"},
 			[]string{"bb", "ABC", "bb"},
 		},
