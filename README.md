@@ -81,6 +81,8 @@ Features
 Changelog
 =========
 
+* v0.0.4:
+  * Boundary code converted into a state machine and should be correct now.
 * v0.0.3:
   * Add io.Closer support to the BoundaryAtomicString. Start thinking about
     how to handle the variety of types that may be involved.
