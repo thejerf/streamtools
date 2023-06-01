@@ -1,5 +1,9 @@
 package streamtools
 
+import (
+	"reflect"
+)
+
 // A Tag is something that can be placed on data coming back from
 // TaggedReaders indicating more information about them.
 //
@@ -25,7 +29,7 @@ type Tag interface {
 
 // TagIs is an optional interface that tags can implement to indicate that
 // they are the same as the passed-in comparison tag.
-type TagIs interface {
+type TagIsI interface {
 	Is(t Tag) bool
 }
 
@@ -42,11 +46,11 @@ func TagIs(tag Tag, target Tag) bool {
 		return true
 	}
 
-	if isable, ok := tag.(TagIs); ok && isable.Is(target) {
+	if isable, ok := tag.(TagIsI); ok && isable.Is(target) {
 		return true
 	}
 
-	for _, subTag := tag.Unwrap() {
+	for _, subTag := range tag.Unwrap() {
 		if TagIs(subTag, target) {
 			return true
 		}
@@ -84,7 +88,7 @@ func TagAs(tag Tag, target any) bool {
 	}
 
 	for _, subTag := range tag.Unwrap() {
-		if As(subTag, target) {
+		if TagAs(subTag, target) {
 			return true
 		}
 	}
